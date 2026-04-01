@@ -723,12 +723,38 @@ function buildGraph(np,fp){
     if(m%12===0)labels.push(m/12+'年目');else labels.push('');
     const iBase=inflatedBase(m);
     const fa=futCostAt(m);
-    eA+=np.inc-(iBase+fa);empA.push(Math.round(eA));
+
+    // 会社員：月収 - 生活費（インフレ考慮） - 未来イベント費用
+    eA+=np.inc-(iBase+fa);
+    empA.push(Math.round(eA));
+
+    // 独学起業：会社員給与継続しながら副業スタート（〜24ヶ月）
+    // 事業収入が会社員収入を超えたら独立（24ヶ月〜）
     const sr=soloRev(m,np.inc,fp.goal);
-    soA+=(np.inc-iBase*1.05-fa)+sr*0.5;soloA.push(Math.round(soA));
+    let soloIncome;
+    if(m<=24){
+      // 副業期：会社員給与＋事業収入の一部（税・コスト引いた50%）
+      soloIncome=np.inc+sr*0.5;
+    } else {
+      // 独立後：事業収入のみ（ただし独学は頭打ち）
+      soloIncome=Math.max(sr, np.inc*0.8); // 最低でも会社員の80%は維持
+    }
+    soA+=soloIncome-iBase-fa;
+    soloA.push(Math.round(soA));
+
+    // 仕組みで起業：同じく副業期は会社員給与継続
     const scf=structCF(m,np.inc,fp.goal);
-    const ep=m<=15?(np.inc-iBase*1.1-fa):(np.inc-iBase-fa);
-    skA+=ep+scf;structA.push(Math.round(skA));
+    let structIncome;
+    if(m<=18){
+      // 副業期：会社員給与＋事業CF（先行投資コスト込み）
+      structIncome=np.inc+scf;
+    } else {
+      // 独立後：事業収入が伸び続ける
+      structIncome=Math.max(scf, np.inc);
+    }
+    skA+=structIncome-iBase-fa;
+    structA.push(Math.round(skA));
+
     if(lifeTargetInc>0&&!lifeReachMonth&&scf+1>=lifeTargetInc)lifeReachMonth=m;
     if(!crossM&&structA[m]>=empA[m])crossM=m;
   }
