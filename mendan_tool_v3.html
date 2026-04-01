@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7年後の資産シミュレーション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efeb;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --border:#e8e6e0;--border2:#d3d1c7;
+  --purple:#534AB7;--purple-l:#EEEDFE;
+  --green:#1D9E75;--green-l:#E1F5EE;
+  --amber:#BA7517;--amber-l:#FAEEDA;
+  --coral:#D85A30;--coral-l:#FAECE7;
+  --blue:#185FA5;--blue-l:#E6F1FB;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1e1e1c;--bg2:#282825;--bg3:#323230;
+    --text:#e8e6e0;--text2:#b4b2a9;--text3:#888780;
+    --border:#3a3a37;--border2:#4a4a46;
+    --purple-l:#2a2560;--green-l:#0a3d2e;--amber-l:#3d2a05;--coral-l:#3d1a0a;--blue-l:#0a2040;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding:20px;}
+.wrap{max-width:740px;margin:0 auto;background:var(--bg);border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.08);}
+h1{font-size:18px;font-weight:600;margin-bottom:4px;}
+.sub{font-size:12px;color:var(--text3);margin-bottom:20px;}
+.tab-bar{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;}
+.tab{padding:10px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.tab.on{color:var(--purple);border-bottom-color:var(--purple);}
+.tab.done{color:var(--green);}
+.panel{display:none;}.panel.on{display:block;}
+.sec{font-size:12px;font-weight:500;color:var(--text2);margin:16px 0 8px;}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.lbl{font-size:12px;color:var(--text2);min-width:96px;}
+.cv{font-size:13px;font-weight:500;color:var(--text);min-width:60px;text-align:right;}
+input[type=range]{flex:1;accent-color:var(--purple);}
+input[type=number],input[type=text]{padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--r);font-size:13px;background:var(--bg);color:var(--text);}
+input[type=number]{width:72px;}
+input[type=text]{flex:1;}
+.btn{padding:5px 12px;font-size:12px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--bg2);}
+.btn.on{background:var(--purple);color:var(--purple-l);border-color:var(--purple);}
+.btn.grn.on{background:var(--green);color:var(--green-l);border-color:var(--green);}
+.btn.amb.on{background:var(--amber);color:var(--amber-l);border-color:var(--amber);}
+.btn.red.on{background:var(--coral);color:var(--coral-l);border-color:var(--coral);}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.grade-btn{padding:4px 10px;font-size:11px;border-radius:16px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;}
+.grade-btn.on{background:var(--purple);color:var(--purple-l);border-color:var(--purple);}
+.child-block{background:var(--bg2);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;border:0.5px solid var(--border);}
+.card{background:var(--bg2);border-radius:var(--rl);padding:14px 16px;border:0.5px solid var(--border);margin-top:12px;}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);}
+.sr:last-child{border-bottom:none;}
+.sk{font-size:11px;color:var(--text2);}
+.sv{font-size:12px;font-weight:500;color:var(--text);}
+.sv.red{color:#993C1D;}.sv.grn{color:#0F6E56;}
+.tbar{height:5px;border-radius:3px;background:var(--border);margin:10px 0 3px;overflow:hidden;}
+.tfill{height:100%;border-radius:3px;background:var(--purple);transition:width .3s;}
+.hint{font-size:11px;color:var(--text3);margin:3px 0 6px;}
+.next-btn,.reflect-btn{width:100%;padding:12px;border:none;border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer;margin-top:16px;transition:opacity .15s;}
+.next-btn{background:var(--purple);color:#fff;}
+.reflect-btn{background:var(--green);color:#fff;}
+.next-btn:hover,.reflect-btn:hover{opacity:.88;}
+.sc{flex:1;min-width:90px;background:var(--bg2);border-radius:var(--r);padding:10px 12px;}
+.sc-l{font-size:11px;color:var(--text2);margin:0 0 3px;}
+.sc-v{font-size:14px;font-weight:500;margin:0;}
+.sc-s{font-size:10px;color:var(--text3);margin:2px 0 0;}
+.bpc{border-radius:var(--rl);padding:11px 13px;border:0.5px solid var(--border);background:var(--bg2);flex:1;min-width:90px;}
+.bph{font-size:11px;font-weight:500;margin:0 0 4px;}
+.bpv{font-size:15px;font-weight:500;margin:0 0 4px;}
+.bpm{font-size:11px;color:var(--text2);line-height:1.6;margin:0;}
+.phase-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;}
+@media(max-width:540px){.phase-cards{grid-template-columns:1fr;}}
+.pc{border-radius:var(--rl);padding:14px;border:0.5px solid var(--border);background:var(--bg2);}
+.pc-badge{font-size:10px;font-weight:500;padding:3px 8px;border-radius:10px;display:inline-block;margin-bottom:8px;}
+.pc-title{font-size:13px;font-weight:600;margin:0 0 10px;color:var(--text);}
+.pc-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.pc-k{font-size:11px;color:var(--text2);}
+.pc-v{font-size:13px;font-weight:500;}
+.pc-msg{font-size:11px;color:var(--text2);line-height:1.7;margin:10px 0 0;padding-top:10px;border-top:0.5px solid var(--border);}
+.ginfo{font-size:11px;color:var(--text3);margin-bottom:10px;padding:7px 10px;background:var(--bg2);border-radius:var(--r);}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--text2);flex-wrap:wrap;margin-bottom:8px;}
+.cmp-card{flex:1;min-width:80px;text-align:center;padding:10px 8px;background:var(--bg);border-radius:var(--r);border:0.5px solid var(--border);}
+.cmp-card.hl{border:2px solid var(--green);background:var(--bg2);}
+/* 変動費グリッド */
+.var-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:480px){.var-grid{grid-template-columns:1fr;}}
+.var-item{background:var(--bg2);border-radius:var(--r);padding:10px 12px;border:0.5px solid var(--border);}
+.var-item label{font-size:11px;color:var(--text2);display:block;margin-bottom:6px;}
+.var-item .vr{display:flex;align-items:center;gap:6px;}
+.var-total{background:var(--purple-l);border-radius:var(--r);padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+.vtk{font-size:12px;font-weight:500;color:var(--purple);}
+.vtv{font-size:16px;font-weight:600;color:var(--purple);}
+
+/* ② 結果発表ページ */
+.reveal-wrap{text-align:center;padding:20px 0;}
+.reveal-label{font-size:13px;color:var(--text2);margin-bottom:12px;}
+.reveal-name{font-size:22px;font-weight:600;color:var(--text);margin-bottom:20px;}
+.brand-big{display:inline-block;padding:14px 32px;border-radius:30px;font-size:24px;font-weight:700;margin:8px 0;letter-spacing:.02em;}
+.reveal-desc{font-size:13px;color:var(--text2);margin:8px 0 24px;}
+.reveal-arrow{font-size:28px;color:var(--text3);margin:8px 0;}
+.reveal-goal-label{font-size:12px;color:var(--text2);margin-bottom:6px;}
+.reality-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
+@media(max-width:480px){.reality-cards{grid-template-columns:1fr;}}
+.reality-card{border-radius:var(--rl);padding:14px;border:0.5px solid var(--border);background:var(--bg2);text-align:left;}
+.rc-label{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.rc-val{font-size:18px;font-weight:600;}
+.rc-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.level-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.level-table tr{border-bottom:0.5px solid var(--border);}
+.level-table tr:last-child{border-bottom:none;}
+.level-table td{padding:7px 8px;}
+.level-table .cur-row td{background:var(--purple-l);}
+.rougo-card{border-radius:var(--rl);padding:12px 14px;border:0.5px solid var(--coral);background:var(--coral-l);margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>7年後の資産シミュレーション</h1>
+  <p class="sub">今の生活を入力して、7年後の現実を見てみましょう</p>
+
+  <div class="tab-bar">
+    <div class="tab on"  id="tab-now"    onclick="sw('now')">① 現状入力</div>
+    <div class="tab"     id="tab-reveal" onclick="sw('reveal')">② 現在地確認</div>
+    <div class="tab"     id="tab-future" onclick="sw('future')">③ 未来・目標</div>
+    <div class="tab"     id="tab-graph"  onclick="sw('graph')">④ 資産グラフ</div>
+  </div>
+
+  <!-- ① 現状入力 -->
+  <div class="panel on" id="panel-now">
+    <div class="sec">お名前</div>
+    <div class="row"><input type="text" id="now-name" placeholder="例：田中さん" style="max-width:200px;" oninput="updNow()"></div>
+
+    <div class="sec">今の月収（手取り）</div>
+    <div class="row"><input type="range" min="15" max="100" value="33" step="1" id="now-inc" oninput="updNow()"><span class="cv" id="v-now-inc">33万円</span></div>
+
+    <div class="sec">今の住居</div>
+    <div class="btns">
+      <span class="btn"    id="nht-jikka"     onclick="setNH('jikka')">実家暮らし</span>
+      <span class="btn on" id="nht-rent-apt"  onclick="setNH('rent-apt')">賃貸アパート</span>
+      <span class="btn"    id="nht-rent-man"  onclick="setNH('rent-man')">賃貸マンション</span>
+      <span class="btn"    id="nht-buy-man"   onclick="setNH('buy-man')">分譲マンション</span>
+      <span class="btn"    id="nht-buy-house" onclick="setNH('buy-house')">戸建て（ローン）</span>
+    </div>
+    <div id="now-rent-wrap">
+      <div class="row"><span class="lbl">家賃・ローン</span><input type="number" id="now-rent" value="7" min="0" max="50" oninput="updNow()"><span style="font-size:12px;color:var(--text2);">万円/月</span><span class="hint" id="now-h-hint" style="margin:0 0 0 4px;">（目安：6〜8万円）</span></div>
+      <div id="now-repair-wrap" style="display:none;"><div class="row"><span class="lbl" id="now-repair-lbl">修繕積立金</span><input type="number" id="now-repair" value="2" min="0" max="10" oninput="updNow()"><span style="font-size:12px;color:var(--text2);">万円/月</span><span class="hint" id="now-repair-hint" style="margin:0 0 0 4px;"></span></div></div>
+    </div>
+    <div id="now-jikka-note" style="display:none;padding:8px 12px;background:var(--green-l);border-radius:var(--r);font-size:12px;color:#0F6E56;margin-bottom:8px;">実家暮らしのため、住居費・食費・光熱費は0円で計算します。</div>
+
+    <div class="sec">今の家族構成</div>
+    <div class="btns">
+      <span class="btn grn on" id="nfm-1" onclick="setNFam(1)">独身</span>
+      <span class="btn grn"    id="nfm-2" onclick="setNFam(2)">夫婦2人</span>
+      <span class="btn grn"    id="nfm-3" onclick="setNFam(3)">夫婦＋子1人</span>
+      <span class="btn grn"    id="nfm-4" onclick="setNFam(4)">夫婦＋子2人</span>
+      <span class="btn grn"    id="nfm-5" onclick="setNFam(5)">夫婦＋子3人</span>
+    </div>
+    <div id="now-children"></div>
+
+    <div class="sec">今の車</div>
+    <div class="btns">
+      <span class="btn amb on" id="ncar-none"    onclick="setNCar('none')">なし</span>
+      <span class="btn amb"    id="ncar-compact" onclick="setNCar('compact')">コンパクト</span>
+      <span class="btn amb"    id="ncar-sedan"   onclick="setNCar('sedan')">普通セダン</span>
+      <span class="btn amb"    id="ncar-minivan" onclick="setNCar('minivan')">ミニバン</span>
+    </div>
+    <div class="hint" id="now-car-hint"></div>
+
+    <div class="sec">固定費</div>
+    <div class="row"><span class="lbl">スマホ・通信</span><input type="number" id="now-comm" value="1.5" min="0" max="10" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);">万円/月</span></div>
+    <div class="row"><span class="lbl">保険料</span><input type="number" id="now-ins" value="1.5" min="0" max="10" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);">万円/月</span></div>
+    <div class="row"><span class="lbl">サブスク等</span><input type="number" id="now-sub" value="0.5" min="0" max="5" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);">万円/月</span></div>
+
+    <div class="sec">変動費（正直に入れてみてください）</div>
+    <div class="var-grid">
+      <div class="var-item"><label>交際費・飲み会</label><div class="vr"><input type="number" id="v-social" value="2" min="0" max="30" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+      <div class="var-item"><label>外食費</label><div class="vr"><input type="number" id="v-eat" value="1.5" min="0" max="20" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+      <div class="var-item"><label>美容・衣類</label><div class="vr"><input type="number" id="v-beauty" value="1" min="0" max="20" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+      <div class="var-item"><label>医療費</label><div class="vr"><input type="number" id="v-med" value="0.5" min="0" max="10" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+      <div class="var-item"><label>レジャー・旅行（月割）</label><div class="vr"><input type="number" id="v-leisure" value="1" min="0" max="20" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+      <div class="var-item"><label>日用品・雑費</label><div class="vr"><input type="number" id="v-daily" value="0.5" min="0" max="10" step="0.5" oninput="updNow()"><span style="font-size:12px;color:var(--text2);margin-left:4px;">万円/月</span></div></div>
+    </div>
+    <div class="var-total"><span class="vtk">変動費合計</span><span class="vtv" id="var-total-v">6.5万円/月</span></div>
+
+    <div id="now-summary"></div>
+    <button class="next-btn" onclick="goReveal()">次へ：現在地を確認する →</button>
+  </div>
+
+  <!-- ② 現在地確認（結果発表） -->
+  <div class="panel" id="panel-reveal">
+    <div class="reveal-wrap">
+      <p class="reveal-label">入力した情報をもとに診断しました</p>
+      <p class="reveal-name" id="reveal-name">さんの現在地</p>
+
+      <p style="font-size:12px;color:var(--text2);margin-bottom:8px;">今の月収・生活水準だと</p>
+      <div id="reveal-brand-now"></div>
+      <p class="reveal-desc" id="reveal-brand-desc"></p>
+    </div>
+
+    <!-- 現実カード -->
+    <div class="reality-cards" id="reality-cards"></div>
+
+    <!-- 生活レベル早見表 -->
+    <div class="card" style="margin-top:16px;">
+      <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">生活レベル早見表</p>
+      <table class="level-table" id="level-table"></table>
+    </div>
+
+    <!-- 老後資金 -->
+    <div class="rougo-card" id="rougo-now">
+      <p style="font-size:12px;font-weight:600;color:#7a2510;margin-bottom:8px;">このまま会社員を続けると…</p>
+      <div id="rougo-content-now"></div>
+    </div>
+
+    <button class="next-btn" onclick="sw('future')" style="margin-top:20px;">でも、変えられる → 未来を描く</button>
+  </div>
+
+  <!-- ③ 未来・目標 -->
+  <div class="panel" id="panel-future">
+    <div class="sec">目標月収（事業で目指したい額）</div>
+    <div class="row"><input type="range" min="30" max="200" value="80" step="10" id="fut-goal" oninput="updFuture()"><span class="cv" id="v-fut-goal">80万円</span></div>
+
+    <div class="sec">どんな生活を手に入れたいですか？</div>
+    <div class="btns">
+      <span class="btn on" id="life-0" onclick="setLife(0)">今のまま</span>
+      <span class="btn"    id="life-1" onclick="setLife(1)">月1外食できる生活</span>
+      <span class="btn"    id="life-2" onclick="setLife(2)">週1外食できる生活</span>
+      <span class="btn"    id="life-3" onclick="setLife(3)">海外旅行年1回</span>
+      <span class="btn"    id="life-4" onclick="setLife(4)">お金を気にせず使える</span>
+    </div>
+    <div class="hint" id="life-hint"></div>
+
+    <div class="sec">将来の住居</div>
+    <div class="btns">
+      <span class="btn on" id="fht-keep"      onclick="setFH('keep')">今のまま</span>
+      <span class="btn"    id="fht-rent-up"   onclick="setFH('rent-up')">賃貸アップ</span>
+      <span class="btn"    id="fht-buy-man"   onclick="setFH('buy-man')">分譲マンション購入</span>
+      <span class="btn"    id="fht-buy-house" onclick="setFH('buy-house')">戸建て購入</span>
+    </div>
+    <div id="fut-house-detail" style="display:none;">
+      <div class="row"><span class="lbl">購入時期</span><span style="font-size:12px;color:var(--text2);">起業から</span><input type="number" id="fut-house-yr" value="3" min="1" max="7" oninput="updFuture()"><span style="font-size:12px;color:var(--text2);">年目</span></div>
+      <div class="row"><span class="lbl">頭金・初期費用</span><input type="number" id="fut-house-down" value="500" min="0" max="2000" step="100" oninput="updFuture()"><span style="font-size:12px;color:var(--text2);">万円（一括）</span></div>
+      <div class="row"><span class="lbl">ローン返済額</span><input type="number" id="fut-house-loan" value="12" min="5" max="30" oninput="updFuture()"><span style="font-size:12px;color:var(--text2);">万円/月</span></div>
+    </div>
+
+    <div class="sec">将来の家族計画</div>
+    <div class="btns">
+      <span class="btn grn on" id="ffm-0" onclick="setFFam(0)">今のまま</span>
+      <span class="btn grn"    id="ffm-1" onclick="setFFam(1)">結婚予定</span>
+      <span class="btn grn"    id="ffm-2" onclick="setFFam(2)">子供1人予定</span>
+      <span class="btn grn"    id="ffm-3" onclick="setFFam(3)">子供2人予定</span>
+    </div>
+    <div id="fut-family-detail"></div>
+
+    <div class="sec">将来乗りたい車</div>
+    <div class="btns">
+      <span class="btn amb on" id="fcar-keep"    onclick="setFCar('keep')">今のまま</span>
+      <span class="btn amb"    id="fcar-compact" onclick="setFCar('compact')">コンパクト</span>
+      <span class="btn amb"    id="fcar-sedan"   onclick="setFCar('sedan')">普通セダン</span>
+      <span class="btn amb"    id="fcar-minivan" onclick="setFCar('minivan')">ミニバン</span>
+      <span class="btn amb"    id="fcar-luxury"  onclick="setFCar('luxury')">高級車（ベンツ等）</span>
+    </div>
+    <div class="hint" id="fut-car-hint"></div>
+    <div id="fut-car-timing" style="display:none;">
+      <div class="row"><span class="lbl">購入時期</span><span style="font-size:12px;color:var(--text2);">起業から</span><input type="number" id="fut-car-yr" value="3" min="1" max="7" oninput="updFuture()"><span style="font-size:12px;color:var(--text2);">年目</span></div>
+    </div>
+
+    <div id="fut-summary"></div>
+    <button class="reflect-btn" onclick="reflectAll()">7年後のグラフを見る →</button>
+  </div>
+
+  <!-- ④ 資産グラフ -->
+  <div class="panel" id="panel-graph">
+    <div class="ginfo" id="graph-label">← 現状・未来タブを入力してから反映してください</div>
+
+    <!-- ブランド逆転表示 -->
+    <div id="brand-flip" style="display:none;background:var(--bg2);border-radius:var(--rl);padding:20px;border:0.5px solid var(--border);text-align:center;margin-bottom:16px;">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px;" id="flip-name-label">さんが仕組みで起業したら</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+        <div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:4px;">今</p>
+          <div id="flip-brand-now"></div>
+        </div>
+        <div style="font-size:24px;color:var(--green);">→</div>
+        <div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:4px;">7年後</p>
+          <div id="flip-brand-goal"></div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--green);margin-top:12px;font-weight:500;" id="flip-reach"></p>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;" id="stat-row"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="bp-row"></div>
+    <div style="position:relative;width:100%;height:300px;margin-bottom:8px;"><canvas id="mc"></canvas></div>
+    <div class="legend">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:3px;background:#444441;display:inline-block;border-radius:2px;"></span>会社員のまま</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:0;border-top:2.5px dashed #888780;display:inline-block;"></span>独学で起業</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:3px;background:#1D9E75;display:inline-block;border-radius:2px;"></span>仕組みで起業</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:#D85A30;border-radius:2px;display:inline-block;opacity:.6;"></span>一括支出</span>
+    </div>
+
+    <!-- フェーズカード -->
+    <div class="phase-cards">
+      <div class="pc">
+        <span class="pc-badge" style="background:var(--coral-l);color:#7a2510;">先行投資期　0〜1年</span>
+        <p class="pc-title">まず谷を越える</p>
+        <div class="pc-row"><span class="pc-k">収益</span><span class="pc-v" style="color:var(--coral);">マイナス〜微増</span></div>
+        <div class="pc-row"><span class="pc-k">稼働時間</span><span class="pc-v" style="color:var(--coral);">週50〜60時間</span></div>
+        <p class="pc-msg">ここが一番きつい。でも全員が通る道。乗り越えた人だけが次へ進める。</p>
+      </div>
+      <div class="pc">
+        <span class="pc-badge" style="background:var(--blue-l);color:var(--blue);">加速期　1〜3年</span>
+        <p class="pc-title">結果が出始める</p>
+        <div class="pc-row"><span class="pc-k">収益</span><span class="pc-v" style="color:var(--blue);">会社員収入を超え始める</span></div>
+        <div class="pc-row"><span class="pc-k">稼働時間</span><span class="pc-v" style="color:var(--blue);">週40〜50時間</span></div>
+        <p class="pc-msg">実績・口コミ・自信がスパイラルで積み上がる。手を止めないことが全て。</p>
+      </div>
+      <div class="pc">
+        <span class="pc-badge" style="background:var(--green-l);color:#0F6E56;">仕組み化期　3年〜</span>
+        <p class="pc-title">時間が自由になる</p>
+        <div class="pc-row"><span class="pc-k">収益</span><span class="pc-v" style="color:var(--green);">安定・右肩上がり</span></div>
+        <div class="pc-row"><span class="pc-k">稼働時間</span><span class="pc-v" style="color:var(--green);">週10〜20時間</span></div>
+        <p class="pc-msg">会社員の4分の1の時間で、それ以上の収益。時間と場所の自由が手に入る。</p>
+      </div>
+    </div>
+
+    <div id="compare-card" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<script>
+// ===== 定数 =====
+const HOUSE_CFG={
+  'jikka':   {hint:'',extra:0,repair:false,jikka:true},
+  'rent-apt':{hint:'目安：6〜8万円',extra:0,repair:false},
+  'rent-man':{hint:'目安：8〜12万円',extra:1.5,repair:false},
+  'buy-man':{hint:'目安：10〜18万円',extra:2,repair:true,rHint:'目安：2〜4万円',rLbl:'修繕積立金'},
+  'buy-house':{hint:'目安：8〜15万円',extra:1,repair:true,rHint:'目安：1〜3万円',rLbl:'修繕積立'},
+};
+const FAM_BASE={1:{food:4,util:1.2},2:{food:6.5,util:1.8},3:{food:8,util:2.2},4:{food:10,util:2.8},5:{food:12,util:3.2}};
+const GRADES=['未就学','小学生','中学生','高校生','大学生'];
+const GRADE_COST={'未就学':2.2,'小学生':3.5,'中学生':5.5,'高校生':7.0,'大学生':10.0};
+const CAR_CFG={
+  none:{cost:0,hint:''},compact:{cost:3.5,hint:'購入償却1万＋維持費2.5万（目安）'},
+  sedan:{cost:5.0,hint:'購入償却1.5万＋維持費3.5万（目安）'},
+  minivan:{cost:6.5,hint:'購入償却2万＋維持費4.5万（目安）'},
+  luxury:{cost:14,hint:'購入償却6万＋維持費8万（ベンツ・BMW等の目安）'},
+  keep:{cost:0,hint:'現状と同じ'},
+};
+const BRANDS=[
+  {min:0,  max:20, name:'古着クラス',      color:'#5F5E5A',bg:'#D3D1C7',desc:'毎月カツカツ。旅行・外食は我慢'},
+  {min:20, max:35, name:'ユニクロクラス',  color:'#444441',bg:'#B4B2A9',desc:'普通の社会人。贅沢はできない'},
+  {min:35, max:60, name:'ZARAクラス',      color:'#185FA5',bg:'#85B7EB',desc:'月1外食・年1国内旅行ができる'},
+  {min:60, max:100,name:'バレンシアガクラス',color:'#3C3489',bg:'#AFA9EC',desc:'週1外食・海外旅行年1回できる'},
+  {min:100,max:200,name:'ヴィトンクラス',  color:'#633806',bg:'#EF9F27',desc:'好きな時に外食・海外年2〜3回'},
+  {min:200,max:999,name:'エルメスクラス',  color:'#712B13',bg:'#F0997B',desc:'お金を気にせず生きられる'},
+];
+const LIFE_LEVELS=[
+  {id:0,label:'今のまま',targetInc:0,hint:''},
+  {id:1,label:'月1外食できる生活',targetInc:40,hint:'目安：月収40万円〜'},
+  {id:2,label:'週1外食できる生活',targetInc:60,hint:'目安：月収60万円〜'},
+  {id:3,label:'海外旅行年1回',targetInc:80,hint:'目安：月収80万円〜'},
+  {id:4,label:'お金を気にせず使える',targetInc:150,hint:'目安：月収150万円〜'},
+];
+const INFLATION=0.02;
+let nHouse='rent-apt',nFam=1,nCar='none',nChildGrades={};
+let fHouse='keep',fFamPlan=0,fCar='keep',doWedding=true,lifeGoal=0;
+let chart=null;
+
+// ===== タブ =====
+function sw(t){
+  const keys=['now','reveal','future','graph'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('on',keys[i]===t));
+  document.querySelectorAll('.panel').forEach((el,i)=>el.classList.toggle('on','panel-'+keys[i]==='panel-'+t));
+}
+function goReveal(){
+  buildReveal();
+  sw('reveal');
+}
+
+// ===== ブランド =====
+function getBrand(inc){return BRANDS.find(b=>inc>=b.min&&inc<b.max)||BRANDS[BRANDS.length-1];}
+function getEffectiveBrand(inc,surplus){
+  const base=getBrand(inc);
+  if(surplus<=1&&BRANDS.indexOf(base)>0){
+    // 貯蓄余力1万円以下なら1つ下げる
+    return{brand:BRANDS[BRANDS.indexOf(base)-1],downgraded:true,baseName:base.name};
+  }
+  return{brand:base,downgraded:false,baseName:base.name};
+}
+function brandBigHTML(brand){
+  return `<span class="brand-big" style="background:${brand.bg};color:${brand.color};">${brand.name}</span>`;
+}
+function brandSmallHTML(brand){
+  return `<span style="display:inline-block;padding:6px 16px;border-radius:20px;font-size:14px;font-weight:600;background:${brand.bg};color:${brand.color};">${brand.name}</span>`;
+}
+
+// ===== 現状タブ =====
+function setNH(k){
+  nHouse=k;
+  ['jikka','rent-apt','rent-man','buy-man','buy-house'].forEach(id=>document.getElementById('nht-'+id).classList.remove('on'));
+  document.getElementById('nht-'+k).classList.add('on');
+  const h=HOUSE_CFG[k];
+  const isJikka=h.jikka||false;
+  // 実家暮らしなら住居入力欄を非表示
+  document.getElementById('now-rent-wrap').style.display=isJikka?'none':'';
+  document.getElementById('now-jikka-note').style.display=isJikka?'':'none';
+  if(!isJikka){
+    document.getElementById('now-h-hint').textContent='（'+h.hint+'）';
+    const rw=document.getElementById('now-repair-wrap');
+    if(h.repair){rw.style.display='';document.getElementById('now-repair-lbl').textContent=h.rLbl;document.getElementById('now-repair-hint').textContent='（'+h.rHint+'）';document.getElementById('now-repair').value=k==='buy-man'?2:1;}
+    else rw.style.display='none';
+  }
+  updNow();
+}
+function setNFam(n){
+  nFam=n;
+  for(let i=1;i<=5;i++) document.getElementById('nfm-'+i).classList.toggle('on',i===n);
+  const kids=Math.max(0,n-2);
+  const ng={};
+  for(let i=1;i<=kids;i++) ng[i]=nChildGrades[i]||'未就学';
+  nChildGrades=ng;
+  renderNChildren();
+  updNow();
+}
+function setNCar(k){
+  nCar=k;
+  ['none','compact','sedan','minivan'].forEach(id=>document.getElementById('ncar-'+id).classList.remove('on'));
+  document.getElementById('ncar-'+k).classList.add('on');
+  document.getElementById('now-car-hint').textContent=CAR_CFG[k].hint;
+  updNow();
+}
+function setNGrade(i,g){nChildGrades[i]=g;renderNChildren();updNow();}
+function renderNChildren(){
+  const kids=Math.max(0,nFam-2);
+  const area=document.getElementById('now-children');
+  if(!kids){area.innerHTML='';return;}
+  area.innerHTML=Array.from({length:kids},(_,i)=>{
+    const cur=nChildGrades[i+1]||'未就学';
+    const btns=GRADES.map(g=>`<span class="grade-btn${g===cur?' on':''}" onclick="setNGrade(${i+1},'${g}')">${g}</span>`).join('');
+    return `<div class="child-block"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--text2);min-width:52px;">子供${i+1}人目</span>${btns}<span style="font-size:12px;font-weight:500;color:var(--purple);margin-left:auto;">月${GRADE_COST[cur]}万円</span></div></div>`;
+  }).join('');
+}
+function getVarTotal(){
+  return ['social','eat','beauty','med','leisure','daily'].reduce((s,k)=>s+(parseFloat(document.getElementById('v-'+k).value)||0),0);
+}
+function getNowParams(){
+  const h=HOUSE_CFG[nHouse];
+  const isJikka=h.jikka||false;
+  const rent=isJikka?0:(parseFloat(document.getElementById('now-rent').value)||7);
+  const repair=(!isJikka&&h.repair)?(parseFloat(document.getElementById('now-repair').value)||0):0;
+  const inc=parseInt(document.getElementById('now-inc').value)||33;
+  const comm=parseFloat(document.getElementById('now-comm').value)||0;
+  const ins=parseFloat(document.getElementById('now-ins').value)||0;
+  const sub=parseFloat(document.getElementById('now-sub').value)||0;
+  const varTotal=getVarTotal();
+  const fbRaw=FAM_BASE[Math.min(nFam,5)]||FAM_BASE[1];
+  // 実家暮らしは食費・光熱費0
+  const fb=isJikka?{food:0,util:0}:fbRaw;
+  const car=CAR_CFG[nCar].cost;
+  const kids=Math.max(0,nFam-2);
+  let edu=0;
+  for(let i=1;i<=kids;i++) edu+=GRADE_COST[nChildGrades[i]||'未就学'];
+  const housing=rent+(h.extra||0)+repair;
+  const total=housing+fb.food+fb.util+car+edu+comm+ins+sub+varTotal;
+  const name=(document.getElementById('now-name').value||'あなた').replace(/さん$/,'');
+  return{inc,housing,fb,car,edu,comm,ins,sub,varTotal,total,surplus:inc-total,kids,name,isJikka};
+}
+function updNow(){
+  document.getElementById('v-now-inc').textContent=(parseInt(document.getElementById('now-inc').value)||33)+'万円';
+  const varTotal=getVarTotal();
+  document.getElementById('var-total-v').textContent=varTotal.toFixed(1)+'万円/月';
+  const p=getNowParams();
+  const rate=Math.min(100,Math.round(p.total/p.inc*100));
+  const kids=Math.max(0,nFam-2);
+  const kidRows=Array.from({length:kids},(_,i)=>{const g=nChildGrades[i+1]||'未就学';return `<div class="sr"><span class="sk">子供${i+1}（${g}）</span><span class="sv">${GRADE_COST[g].toFixed(1)}万円</span></div>`;}).join('');
+  document.getElementById('now-summary').innerHTML=`
+    <div class="card">
+      <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">月間支出サマリー</p>
+      <div class="sr"><span class="sk">住居費合計</span><span class="sv">${p.housing.toFixed(1)}万円</span></div>
+      <div class="sr"><span class="sk">食費</span><span class="sv">${p.fb.food.toFixed(1)}万円</span></div>
+      <div class="sr"><span class="sk">光熱費・水道</span><span class="sv">${p.fb.util.toFixed(1)}万円</span></div>
+      ${p.car>0?`<div class="sr"><span class="sk">車（維持費＋償却）</span><span class="sv">${p.car.toFixed(1)}万円</span></div>`:''}
+      ${kidRows}
+      ${p.comm>0?`<div class="sr"><span class="sk">スマホ・通信</span><span class="sv">${p.comm.toFixed(1)}万円</span></div>`:''}
+      ${p.ins>0?`<div class="sr"><span class="sk">保険料</span><span class="sv">${p.ins.toFixed(1)}万円</span></div>`:''}
+      ${p.sub>0?`<div class="sr"><span class="sk">サブスク等</span><span class="sv">${p.sub.toFixed(1)}万円</span></div>`:''}
+      <div class="sr"><span class="sk">変動費合計</span><span class="sv">${p.varTotal.toFixed(1)}万円</span></div>
+      <div class="tbar"><div class="tfill" style="width:${rate}%"></div></div>
+      <p style="font-size:11px;color:var(--text3);text-align:right;margin:0 0 6px;">収入の${rate}%が支出</p>
+      <div class="sr"><span class="sk" style="font-weight:600;">合計支出</span><span class="sv" style="font-size:15px;">${p.total.toFixed(1)}万円/月</span></div>
+      <div class="sr"><span class="sk" style="font-weight:600;">貯蓄余力</span><span class="sv ${p.surplus>=0?'grn':'red'}" style="font-size:15px;">${p.surplus>=0?'+':''}${p.surplus.toFixed(1)}万円/月</span></div>
+      <p style="font-size:10px;color:var(--text3);margin-top:6px;">※物価は年2%上昇を想定。7年後の実質支出はさらに増加します。</p>
+    </div>`;
+}
+
+// ===== ② 現在地確認ページ =====
+function buildReveal(){
+  const p=getNowParams();
+  const brand=getBrand(p.inc);
+  // 7年後の会社員資産試算（簡易）
+  const ROUGO=2000;
+  let eA=0;
+  for(let m=1;m<=84;m++){
+    const yr=Math.floor(m/12);
+    const iBase=p.total*Math.pow(1.02,yr);
+    eA+=p.inc-iBase;
+  }
+  const e7=Math.round(eA);
+  const rougoShort=ROUGO-e7;
+  // 7年後インフレ後の月支出
+  const spend7=Math.round(p.total*Math.pow(1.02,7)*10)/10;
+
+  const effective=getEffectiveBrand(p.inc,p.surplus);
+  const displayBrand=effective.brand;
+  document.getElementById('reveal-name').textContent=p.name+'さんの現在地';
+  document.getElementById('reveal-brand-now').innerHTML=brandBigHTML(displayBrand);
+  document.getElementById('reveal-brand-desc').textContent=displayBrand.desc+(effective.downgraded?'（月収では'+effective.baseName+'ですが、貯蓄余力が少ないため実質1ランク下）':'');
+
+  document.getElementById('reality-cards').innerHTML=`
+    <div class="reality-card">
+      <p class="rc-label">今の月収</p>
+      <p class="rc-val" style="color:var(--text);">${p.inc}万円</p>
+      <p class="rc-sub">手取りベース</p>
+    </div>
+    <div class="reality-card">
+      <p class="rc-label">今の月間支出</p>
+      <p class="rc-val" style="color:var(--coral);">${p.total.toFixed(1)}万円</p>
+      <p class="rc-sub">毎月消えていくお金</p>
+    </div>
+    <div class="reality-card">
+      <p class="rc-label">月の貯蓄余力</p>
+      <p class="rc-val" style="color:${p.surplus>=0?'var(--green)':'var(--coral)'};">${p.surplus>=0?'+':''}${p.surplus.toFixed(1)}万円</p>
+      <p class="rc-sub">年間${Math.round(p.surplus*12)}万円しか積み上がらない</p>
+    </div>
+    <div class="reality-card">
+      <p class="rc-label">7年後の月間支出（物価上昇後）</p>
+      <p class="rc-val" style="color:var(--coral);">${spend7}万円</p>
+      <p class="rc-sub">年2%インフレで${Math.round((spend7-p.total)*10)/10}万円増加</p>
+    </div>`;
+
+  // 生活レベル表（実質クラスでハイライト）
+  const levelRows=BRANDS.map(b=>{
+    const isIncomeCur=p.inc>=b.min&&p.inc<b.max;
+    const isEffectiveCur=b.name===displayBrand.name;
+    const isCur=isEffectiveCur;
+    let marker='';
+    if(isEffectiveCur&&effective.downgraded) marker='← 実質の現在';
+    else if(isEffectiveCur) marker='← 現在';
+    else if(isIncomeCur&&effective.downgraded) marker='← 月収ベース';
+    return `<tr class="${isCur?'cur-row':''}">
+      <td><span style="background:${b.bg};color:${b.color};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${b.name}</span></td>
+      <td style="color:var(--text2);font-size:11px;">月収${b.min}〜${b.max<999?b.max+'万':'∞'}円</td>
+      <td style="font-size:11px;color:var(--text2);">${b.desc}</td>
+      <td style="font-size:11px;font-weight:500;text-align:right;color:var(--purple);">${marker}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('level-table').innerHTML=levelRows;
+
+  // 老後資金
+  const fmt=v=>{const a=Math.abs(v),s=v<0?'▲':'';if(a>=10000)return s+(Math.round(a/100)/100).toFixed(1)+'億円';return s+Math.round(a).toLocaleString()+'万円';};
+  document.getElementById('rougo-content-now').innerHTML=`
+    <div class="sr"><span class="sk">このまま7年間の資産累積（概算）</span><span class="sv ${e7>=0?'':'red'}">${fmt(e7)}</span></div>
+    <div class="sr"><span class="sk">老後に必要とされる資金（目安）</span><span class="sv">2,000万円</span></div>
+    <div class="sr"><span class="sk">不足額</span><span class="sv red">${rougoShort>0?'▲'+rougoShort.toLocaleString()+'万円':'余裕あり'}</span></div>`;
+}
+
+// ===== ③ 未来タブ =====
+function setLife(n){
+  lifeGoal=n;
+  for(let i=0;i<=4;i++) document.getElementById('life-'+i).classList.toggle('on',i===n);
+  document.getElementById('life-hint').textContent=LIFE_LEVELS[n].hint;
+  updFuture();
+}
+function setFH(k){
+  fHouse=k;
+  ['keep','rent-up','buy-man','buy-house'].forEach(id=>document.getElementById('fht-'+id).classList.remove('on'));
+  document.getElementById('fht-'+k).classList.add('on');
+  document.getElementById('fut-house-detail').style.display=(k==='buy-man'||k==='buy-house')?'':'none';
+  updFuture();
+}
+function setFFam(n){
+  fFamPlan=n;
+  for(let i=0;i<=3;i++) document.getElementById('ffm-'+i).classList.toggle('on',i===n);
+  if(n>=1) doWedding=true;
+  renderFFamDetail();
+  updFuture();
+}
+function toggleWedding(){
+  doWedding=!doWedding;
+  document.getElementById('wedding-btn').classList.toggle('on',doWedding);
+  document.getElementById('wedding-btn').textContent=doWedding?'する':'しない';
+  updFuture();
+}
+function renderFFamDetail(){
+  const area=document.getElementById('fut-family-detail');
+  if(fFamPlan===0){area.innerHTML='';return;}
+  let html=`<div class="child-block"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span style="font-size:12px;color:var(--text2);">結婚式</span>
+    <span class="btn red on" id="wedding-btn" onclick="toggleWedding()">${doWedding?'する':'しない'}</span>
+    <span style="font-size:11px;color:var(--text3);">${doWedding?'-480万円（一括）':'費用なし'}</span>
+  </div></div>`;
+  const numKids=fFamPlan>=2?fFamPlan-1:0;
+  for(let i=1;i<=numKids;i++){
+    html+=`<div class="child-block"><div class="row" style="margin:0;">
+      <span style="font-size:12px;color:var(--text2);min-width:60px;">子供${i}人目</span>
+      <span style="font-size:12px;color:var(--text2);">起業から</span>
+      <input type="number" id="fkid-yr-${i}" value="${i+1}" min="1" max="7" style="width:55px;" oninput="updFuture()">
+      <span style="font-size:12px;color:var(--text2);">年目〜　月9万円</span>
+    </div></div>`;
+  }
+  area.innerHTML=html;
+}
+function setFCar(k){
+  fCar=k;
+  ['keep','compact','sedan','minivan','luxury'].forEach(id=>document.getElementById('fcar-'+id).classList.remove('on'));
+  document.getElementById('fcar-'+k).classList.add('on');
+  document.getElementById('fut-car-hint').textContent=CAR_CFG[k].hint;
+  document.getElementById('fut-car-timing').style.display=(k!=='keep')?'':'none';
+  updFuture();
+}
+function getFutureParams(){
+  const goal=parseInt(document.getElementById('fut-goal').value)||80;
+  let futHouseDownMonth=null,futHouseLoanMon=0;
+  if(fHouse==='buy-man'||fHouse==='buy-house'){
+    futHouseDownMonth=(parseInt(document.getElementById('fut-house-yr').value)||3)*12;
+    futHouseLoanMon=parseFloat(document.getElementById('fut-house-loan').value)||12;
+  }
+  const futCarCost=fCar==='keep'?-1:CAR_CFG[fCar].cost;
+  const futCarMon=fCar!=='keep'?(parseInt(document.getElementById('fut-car-yr')?.value)||3)*12:null;
+  const events=[];
+  if(fFamPlan>=1&&doWedding) events.push({type:'wedding',month:12,cost:480});
+  const numKids=fFamPlan>=2?fFamPlan-1:0;
+  for(let i=1;i<=numKids;i++){
+    const yr=parseInt(document.getElementById('fkid-yr-'+i)?.value)||(i+1);
+    events.push({type:'kid',month:yr*12,perMon:9});
+  }
+  return{goal,futHouseDownMonth,futHouseLoanMon,futCarCost,futCarMon,events};
+}
+function updFuture(){
+  document.getElementById('v-fut-goal').textContent=(parseInt(document.getElementById('fut-goal').value)||80)+'万円';
+  const fp=getFutureParams();
+  const goalBrand=getBrand(fp.goal);
+  let rows='';
+  if(fHouse!=='keep') rows+=`<div class="sr"><span class="sk">住居変更</span><span class="sv">${{'rent-up':'賃貸アップ（+3万/月）','buy-man':'分譲マンション購入','buy-house':'戸建て購入'}[fHouse]||''}</span></div>`;
+  if(fCar!=='keep') rows+=`<div class="sr"><span class="sk">将来の車</span><span class="sv">${{compact:'コンパクト',sedan:'普通セダン',minivan:'ミニバン',luxury:'高級車'}[fCar]||''} 月${CAR_CFG[fCar]?.cost||0}万円</span></div>`;
+  fp.events.forEach(ev=>{
+    if(ev.type==='wedding') rows+=`<div class="sr"><span class="sk">結婚式</span><span class="sv">-480万（一括）</span></div>`;
+    if(ev.type==='kid') rows+=`<div class="sr"><span class="sk">子供</span><span class="sv">${ev.month/12}年目〜 月9万円</span></div>`;
+  });
+  document.getElementById('fut-summary').innerHTML=`
+    <div class="card" style="margin-top:12px;">
+      <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;">未来の計画サマリー</p>
+      <div class="sr"><span class="sk">目標月収</span><span class="sv" style="color:var(--green);font-size:15px;">${fp.goal}万円</span></div>
+      <div class="sr"><span class="sk">目標ブランドクラス</span><span class="sv"><span style="background:${goalBrand.bg};color:${goalBrand.color};padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;">${goalBrand.name}</span></span></div>
+      <div class="sr"><span class="sk">手に入れたい生活</span><span class="sv">${LIFE_LEVELS[lifeGoal].label}</span></div>
+      ${rows||'<div class="sr"><span class="sk" style="color:var(--text3);">変更なし</span></div>'}
+    </div>`;
+}
+
+// ===== ④ グラフ =====
+function reflectAll(){
+  const np=getNowParams();
+  const fp=getFutureParams();
+  document.getElementById('graph-label').textContent=`反映済み：${np.name}さん / 月収${np.inc}万円 / 目標${fp.goal}万円`;
+  buildGraph(np,fp);
+  sw('graph');
+}
+
+function soloRev(m,inc,goal){
+  const cap=Math.min(goal*0.22,inc*0.5,20);
+  if(m<=6)return 0;if(m<=12)return Math.round((m-6)*0.5);
+  if(m<=24)return Math.round(3+(m-12)*((cap*0.7-3)/12));
+  if(m<=36)return Math.round(cap*0.7+(m-24)*((cap-cap*0.7)/12));
+  if(m<=48)return Math.round(cap);if(m<=60)return Math.round(cap-(m-48)*((cap-cap*0.85)/12));
+  return Math.round(cap*0.85);
+}
+function structCF(m,inc,goal){
+  const invest=m<=3?8:m<=6?6:m<=9?4:m<=12?3:m<=18?2:1;
+  const target=goal*0.55;let r=0;
+  if(m<=3)r=0;else if(m<=8)r=Math.round((m-3)*0.8);else if(m<=15)r=Math.round(4+(m-8)*((inc*0.3-4)/7));
+  else if(m<=24)r=Math.round(inc*0.3+(m-15)*((inc*0.6-inc*0.3)/9));
+  else if(m<=36)r=Math.round(inc*0.6+(m-24)*((target*0.75-inc*0.6)/12));
+  else if(m<=54)r=Math.round(target*0.75+(m-36)*((target-target*0.75)/18));
+  else r=Math.round(target+(m-54)*((target*1.08-target)/30));
+  return r-invest;
+}
+
+function buildGraph(np,fp){
+  const MONTHS=85;
+  const baseM=np.housing+np.fb.food+np.fb.util+np.car+np.comm+np.ins+np.sub+np.varTotal;
+  function inflatedBase(m){return baseM*Math.pow(1+INFLATION,Math.floor(m/12));}
+  function futCostAt(m){
+    let c=0;
+    if(fHouse==='rent-up')c+=3;
+    if(fp.futHouseDownMonth){if(m===fp.futHouseDownMonth)c+=500;if(m>fp.futHouseDownMonth)c+=fp.futHouseLoanMon;}
+    if(fp.futCarMon&&m>=fp.futCarMon&&fp.futCarCost>0)c+=Math.max(0,fp.futCarCost-np.car);
+    fp.events.forEach(ev=>{
+      if(ev.type==='wedding'&&m===ev.month)c+=ev.cost;
+      if(ev.type==='kid'&&m>=ev.month&&m<=ev.month+72)c+=ev.perMon;
+    });
+    return c;
+  }
+
+  let eA=0,soA=-80,skA=-80;
+  const empA=[0],soloA=[-80],structA=[-80],labels=['今'];
+  const evLines=[];
+  fp.events.forEach(ev=>{if(ev.month<=84)evLines.push({m:ev.month,label:ev.type==='wedding'?'結婚式':'子供'});});
+  if(fp.futHouseDownMonth&&fp.futHouseDownMonth<=84)evLines.push({m:fp.futHouseDownMonth,label:'住宅購入'});
+  if(fp.futCarMon&&fp.futCarMon<=84&&fCar!=='keep')evLines.push({m:fp.futCarMon,label:'車購入'});
+
+  const lifeTargetInc=LIFE_LEVELS[lifeGoal].targetInc;
+  let lifeReachMonth=null,crossM=null;
+
+  for(let m=1;m<MONTHS;m++){
+    if(m%12===0)labels.push(m/12+'年目');else labels.push('');
+    const iBase=inflatedBase(m);
+    const fa=futCostAt(m);
+    eA+=np.inc-(iBase+fa);empA.push(Math.round(eA));
+    const sr=soloRev(m,np.inc,fp.goal);
+    soA+=(np.inc-iBase*1.05-fa)+sr*0.5;soloA.push(Math.round(soA));
+    const scf=structCF(m,np.inc,fp.goal);
+    const ep=m<=15?(np.inc-iBase*1.1-fa):(np.inc-iBase-fa);
+    skA+=ep+scf;structA.push(Math.round(skA));
+    if(lifeTargetInc>0&&!lifeReachMonth&&scf+1>=lifeTargetInc)lifeReachMonth=m;
+    if(!crossM&&structA[m]>=empA[m])crossM=m;
+  }
+
+  const e7=empA[84],so7=soloA[84],sk7=structA[84];
+  const soloInc7=soloRev(84,np.inc,fp.goal);
+  const structInc7=Math.max(0,structCF(84,np.inc,fp.goal)+1);
+
+  function fmt(v){const a=Math.abs(v),s=v<0?'▲':'';if(a>=10000)return s+(Math.round(a/100)/100).toFixed(1)+'億円';return s+Math.round(a).toLocaleString()+'万円';}
+
+  // ブランド逆転カード
+  const nowBrand=getBrand(np.inc);
+  const goalBrand=getBrand(fp.goal);
+  document.getElementById('brand-flip').style.display='block';
+  document.getElementById('flip-name-label').textContent=np.name+'さんが仕組みで起業したら';
+  document.getElementById('flip-brand-now').innerHTML=brandSmallHTML(nowBrand);
+  document.getElementById('flip-brand-goal').innerHTML=brandSmallHTML(goalBrand);
+  document.getElementById('flip-reach').textContent=crossM?`${crossM}ヶ月目（${Math.ceil(crossM/12)}年目）に会社員の資産を逆転`:'';
+
+  document.getElementById('stat-row').innerHTML=`
+    <div class="sc"><p class="sc-l">7年後の資産<br>会社員のまま</p><p class="sc-v" style="color:#444441;">${fmt(e7)}</p><p class="sc-s">月収${np.inc}万円固定</p></div>
+    <div class="sc"><p class="sc-l">7年後の資産<br>独学で起業</p><p class="sc-v" style="color:#888780;">${fmt(so7)}</p><p class="sc-s">月収〜${soloInc7}万円で停滞</p></div>
+    <div class="sc"><p class="sc-l">7年後の資産<br>仕組みで起業</p><p class="sc-v" style="color:#1D9E75;">${fmt(sk7)}</p><p class="sc-s">月収${structInc7}万円〜</p></div>`;
+
+  document.getElementById('bp-row').innerHTML=`
+    <div class="bpc"><p class="bph" style="color:#1D9E75;">会社員を逆転するのは</p><p class="bpv" style="color:#1D9E75;">${crossM?crossM+'ヶ月目':'7年以内'}</p><p class="bpm">ここから差が広がり続ける。</p></div>
+    <div class="bpc"><p class="bph" style="color:#888780;">独学との月収差（7年後）</p><p class="bpv" style="color:#888780;">+${Math.max(0,structInc7-soloInc7)}万円/月</p><p class="bpm">仕組みの有無がこの差を生む。</p></div>
+    ${lifeGoal>0?`<div class="bpc"><p class="bph" style="color:#534AB7;">${LIFE_LEVELS[lifeGoal].label}</p><p class="bpv" style="color:#534AB7;">${lifeReachMonth?lifeReachMonth+'ヶ月目':'7年以降'}</p><p class="bpm">この生活を手に入れるタイミング。</p></div>`:''}`;
+
+  document.getElementById('compare-card').innerHTML=`
+    <div style="background:var(--bg2);border-radius:var(--rl);padding:14px 16px;border:0.5px solid var(--border);">
+      <p style="font-size:12px;font-weight:600;color:var(--text);margin:0 0 10px;">7年後の月収比較（目標${fp.goal}万円）</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="cmp-card"><p style="font-size:11px;color:var(--text2);margin:0 0 4px;">会社員のまま</p><p style="font-size:15px;font-weight:500;color:#444441;margin:0;">${np.inc}万円</p><p style="font-size:10px;color:var(--text3);margin:4px 0 0;">変わらない</p></div>
+        <div class="cmp-card"><p style="font-size:11px;color:var(--text2);margin:0 0 4px;">独学で起業</p><p style="font-size:15px;font-weight:500;color:#888780;margin:0;">${soloInc7}万円</p><p style="font-size:10px;color:var(--text3);margin:4px 0 0;">頭打ち・停滞</p></div>
+        <div class="cmp-card hl"><p style="font-size:11px;color:#0F6E56;font-weight:600;margin:0 0 4px;">仕組みで起業</p><p style="font-size:15px;font-weight:500;color:#1D9E75;margin:0;">${structInc7}万円</p><p style="font-size:10px;color:#0F6E56;margin:4px 0 0;">伸び続ける</p></div>
+      </div>
+    </div>`;
+
+  if(!chart){
+    const ctx=document.getElementById('mc').getContext('2d');
+    chart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+      {label:'独学で起業',  data:soloA,  borderColor:'#888780',fill:false,tension:0.3,borderWidth:2,borderDash:[6,4],pointRadius:0,order:2},
+      {label:'仕組みで起業',data:structA,borderColor:'#1D9E75',fill:false,tension:0.3,borderWidth:2.5,pointRadius:0,order:1},
+      {label:'会社員のまま',data:empA,   borderColor:'#444441',fill:false,tension:0.1,borderWidth:3,pointRadius:0,order:0},
+    ]},options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const v=Math.round(c.parsed.y);return c.dataset.label+'：'+(v<0?'▲':'')+Math.abs(v).toLocaleString()+'万円';}}}},
+      scales:{
+        x:{grid:{color:'rgba(136,135,128,0.1)',lineWidth:0.5},ticks:{color:'#888780',font:{size:10}}},
+        y:{grid:{color:'rgba(136,135,128,0.1)',lineWidth:0.5},ticks:{color:'#888780',font:{size:10},callback:v=>{if(Math.abs(v)>=10000)return(v/10000).toFixed(1)+'億';return Math.round(v).toLocaleString()+'万';}}}
+      }
+    },plugins:[{id:'ov',afterDraw(ch){
+      const{ctx,scales,chartArea}=ch;
+      const y0=scales.y.getPixelForValue(0);
+      ctx.save();ctx.strokeStyle='rgba(136,135,128,0.35)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(chartArea.left,y0);ctx.lineTo(chartArea.right,y0);ctx.stroke();
+      ctx.fillStyle='rgba(136,135,128,0.55)';ctx.font='10px sans-serif';ctx.fillText('±0',chartArea.left+4,y0-4);ctx.restore();
+      const x0=scales.x.getPixelForValue(0),x12=scales.x.getPixelForValue(12);
+      ctx.save();ctx.fillStyle='rgba(216,90,48,0.06)';ctx.fillRect(x0,chartArea.top,x12-x0,chartArea.bottom-chartArea.top);
+      ctx.fillStyle='rgba(216,90,48,0.55)';ctx.font='10px sans-serif';ctx.fillText('先行投資期',x0+4,chartArea.top+14);ctx.restore();
+      const x48=scales.x.getPixelForValue(48),xE=scales.x.getPixelForValue(84);
+      ctx.save();ctx.fillStyle='rgba(136,135,128,0.05)';ctx.fillRect(x48,chartArea.top,xE-x48,chartArea.bottom-chartArea.top);
+      ctx.fillStyle='rgba(136,135,128,0.45)';ctx.font='10px sans-serif';ctx.fillText('独学の停滞域',x48+4,chartArea.top+14);ctx.restore();
+      evLines.forEach((ev,ei)=>{
+        if(ev.m>84)return;const x=scales.x.getPixelForValue(ev.m);
+        ctx.save();ctx.strokeStyle='rgba(216,90,48,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+        ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+        ctx.fillStyle='rgba(216,90,48,0.9)';ctx.font='500 10px sans-serif';ctx.fillText(ev.label,x+3,chartArea.top+28+ei*14);ctx.restore();
+      });
+      if(crossM&&crossM<84){
+        const x=scales.x.getPixelForValue(crossM);
+        ctx.save();ctx.strokeStyle='rgba(29,158,117,0.85)';ctx.lineWidth=2;ctx.setLineDash([]);
+        ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+        ctx.fillStyle='rgba(29,158,117,1)';ctx.font='500 10px sans-serif';ctx.fillText('逆転',x+3,chartArea.bottom-14);ctx.restore();
+      }
+      if(lifeGoal>0&&lifeReachMonth&&lifeReachMonth<84){
+        const x=scales.x.getPixelForValue(lifeReachMonth);
+        ctx.save();ctx.strokeStyle='rgba(83,74,183,0.8)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+        ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+        ctx.fillStyle='rgba(83,74,183,0.9)';ctx.font='500 10px sans-serif';ctx.fillText('目標達成',x+3,chartArea.top+60);ctx.restore();
+      }
+    }}]});
+  } else {
+    chart.data.labels=labels;chart.data.datasets[0].data=soloA;chart.data.datasets[1].data=structA;chart.data.datasets[2].data=empA;chart.update('none');
+  }
+}
+
+renderNChildren();renderFFamDetail();updNow();updFuture();
+</script>
+</body>
+</html>
